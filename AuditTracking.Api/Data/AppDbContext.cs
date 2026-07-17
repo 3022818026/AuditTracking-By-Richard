@@ -33,6 +33,10 @@ public class AppDbContext : DbContext
     public DbSet<CorrectiveActionOperationLog> CorrectiveActionOperationLogs =>
         Set<CorrectiveActionOperationLog>();
 
+    public DbSet<RectificationVerificationOperationLog>
+    RectificationVerificationOperationLogs =>
+        Set<RectificationVerificationOperationLog>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
@@ -285,6 +289,40 @@ public class AppDbContext : DbContext
                 .HasMaxLength(1000);
 
             entity.HasIndex(x => x.CorrectiveActionId);
+
+            entity.HasIndex(x => x.OperationType);
+
+            entity.HasIndex(x => x.CreatedAt);
+        });
+
+        modelBuilder.Entity<RectificationVerificationOperationLog>(entity =>
+        {
+            entity.ToTable("RectificationVerificationOperationLogs");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.VerificationNo)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(x => x.OperationType)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.BeforeData)
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(x => x.AfterData)
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(x => x.Operator)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.Remark)
+                .HasMaxLength(1000);
+
+            entity.HasIndex(x => x.RectificationVerificationId);
 
             entity.HasIndex(x => x.OperationType);
 
