@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AuditTracking.Api.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuditTracking.Api.Data;
 
@@ -8,4 +9,6 @@ public class AppDbContext : DbContext
         : base(options)
     {
     }
+
+    public DbSet<AuditPlan> AuditPlans { get; set; }
 }
