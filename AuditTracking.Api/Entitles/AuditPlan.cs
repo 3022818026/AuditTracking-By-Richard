@@ -40,5 +40,23 @@ public class AuditPlan
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+    [MaxLength(100)]
+    public string CreatedBy { get; set; } = "System";
+
     public DateTime? UpdatedAt { get; set; }
+
+    [MaxLength(100)]
+    public string? UpdatedBy { get; set; }
+
+    public DateTime? CompletedAt { get; set; }
+
+    public DateTime? ClosedAt { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+
+    public DateTime? DeletedAt { get; set; }
+
+    [MaxLength(100)]
+    public string? DeletedBy { get; set; }
+
 }

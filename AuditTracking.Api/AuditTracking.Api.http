@@ -1,16 +1,36 @@
 @AuditTracking.Api_HostAddress = https://localhost:7002
+@OperatorName = 夏宋诚
+@AuditPlanId = 1
+
+###############################################
+# 一、基础查询
+###############################################
 
 ### 查询全部审计计划
 GET {{AuditTracking.Api_HostAddress}}/api/audit-plans
 Accept: application/json
 
-### 查询指定审计计划
-GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/1
+### 分页查询审计计划
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?page=1&pageSize=10
 Accept: application/json
+
+### 查询指定审计计划
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Accept: application/json
+
+### 查询审计计划完整详情
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/detail
+Accept: application/json
+
+
+###############################################
+# 二、新增审计计划
+###############################################
 
 ### 新增审计计划
 POST {{AuditTracking.Api_HostAddress}}/api/audit-plans
 Content-Type: application/json
+X-User-Name: {{OperatorName}}
 
 {
   "auditNo": "AUD-2026-001",
@@ -21,9 +41,79 @@ Content-Type: application/json
   "auditor": "夏宋诚",
   "remark": "第一次审计计划接口测试"
 }
-### 修改审计计划
-PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/1
+
+### 新增第二条测试数据
+POST {{AuditTracking.Api_HostAddress}}/api/audit-plans
 Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "auditNo": "AUD-2026-002",
+  "title": "供应商质量审计",
+  "auditType": "供应商审计",
+  "plannedDate": "2026-08-05T09:00:00",
+  "auditee": "供应商A",
+  "auditor": "夏宋诚",
+  "remark": "分页和条件查询测试"
+}
+
+### 【预期400】测试重复审计编号
+POST {{AuditTracking.Api_HostAddress}}/api/audit-plans
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "auditNo": "AUD-2026-001",
+  "title": "重复编号测试",
+  "auditType": "内部审计",
+  "plannedDate": "2026-08-10T09:00:00",
+  "auditee": "质量部",
+  "auditor": "夏宋诚",
+  "remark": "预期返回审计编号已存在"
+}
+
+
+###############################################
+# 三、条件查询
+###############################################
+
+### 按关键词查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?keyword=内部质量&page=1&pageSize=10
+Accept: application/json
+
+### 按草稿状态查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?status=Draft&page=1&pageSize=10
+Accept: application/json
+
+### 按进行中状态查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?status=InProgress&page=1&pageSize=10
+Accept: application/json
+
+### 按审计类型查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?auditType=内部审计&page=1&pageSize=10
+Accept: application/json
+
+### 按日期范围查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-07-01&endDate=2026-07-31&page=1&pageSize=10
+Accept: application/json
+
+### 【预期400】测试错误日期范围
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-08-31&endDate=2026-08-01&page=1&pageSize=10
+Accept: application/json
+
+### 【预期400】测试非法状态筛选
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?status=Unknown&page=1&pageSize=10
+Accept: application/json
+
+
+###############################################
+# 四、修改审计计划
+###############################################
+
+### 修改审计计划基本信息并保持草稿状态
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
 
 {
   "title": "2026年度内部质量审计（已修改）",
@@ -31,31 +121,235 @@ Content-Type: application/json
   "plannedDate": "2026-07-25T09:30:00",
   "auditee": "生产与质量部门",
   "auditor": "夏宋诚",
-  "status": "InProgress",
-  "result": "Pending",
+  "status": "Draft",
+  "result": null,
   "remark": "修改接口测试成功"
 }
 
-### 删除审计计划
-DELETE {{AuditTracking.Api_HostAddress}}/api/audit-plans/1
+### 合法状态流转：草稿 → 进行中
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "title": "2026年度内部质量审计",
+  "auditType": "内部审计",
+  "plannedDate": "2026-07-25T09:30:00",
+  "auditee": "生产与质量部门",
+  "auditor": "夏宋诚",
+  "status": "InProgress",
+  "result": null,
+  "remark": "审计工作正式开始"
+}
+
+### 【预期400】测试进行中但非法退回草稿
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "title": "非法状态流转测试",
+  "auditType": "内部审计",
+  "plannedDate": "2026-07-25T09:30:00",
+  "auditee": "生产与质量部门",
+  "auditor": "夏宋诚",
+  "status": "Draft",
+  "result": null,
+  "remark": "预期返回不允许从进行中变更为草稿"
+}
+
+### 【预期400】测试完成状态但未填写审计结果
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "title": "审计结果校验测试",
+  "auditType": "内部审计",
+  "plannedDate": "2026-08-10T09:00:00",
+  "auditee": "质量部",
+  "auditor": "夏宋诚",
+  "status": "Completed",
+  "result": "",
+  "remark": "完成时未填写结果"
+}
+
+### 合法状态流转：进行中 → 已完成
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "title": "审计结果校验测试",
+  "auditType": "内部审计",
+  "plannedDate": "2026-08-10T09:00:00",
+  "auditee": "质量部",
+  "auditor": "夏宋诚",
+  "status": "Completed",
+  "result": "审计通过",
+  "remark": "审计工作已完成"
+}
+
+### 合法状态流转：已完成 → 已关闭
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "title": "审计结果校验测试",
+  "auditType": "内部审计",
+  "plannedDate": "2026-08-10T09:00:00",
+  "auditee": "质量部",
+  "auditor": "夏宋诚",
+  "status": "Closed",
+  "result": "审计通过，问题均已关闭",
+  "remark": "审计计划正式关闭"
+}
+
+### 【预期400】测试非法状态值
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "title": "非法状态测试",
+  "auditType": "内部审计",
+  "plannedDate": "2026-08-10T09:00:00",
+  "auditee": "质量部",
+  "auditor": "夏宋诚",
+  "status": "abc",
+  "result": null,
+  "remark": "预期返回无效的审计状态"
+}
+
+
+###############################################
+# 五、状态专用接口
+###############################################
+
+### 状态变更：草稿 → 进行中
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/status
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "status": "InProgress",
+  "result": null,
+  "remark": "审计正式开始"
+}
+
+### 状态变更：进行中 → 已完成
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/status
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "status": "Completed",
+  "result": "审计通过",
+  "remark": "审计已经完成"
+}
+
+### 状态变更：已完成 → 已关闭
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/status
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "status": "Closed",
+  "result": "审计通过，整改完成",
+  "remark": "关闭审计计划"
+}
+
+### 【预期400】状态变更时使用非法状态
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/status
+Content-Type: application/json
+X-User-Name: {{OperatorName}}
+
+{
+  "status": "Unknown",
+  "result": null,
+  "remark": "非法状态测试"
+}
+
+
+###############################################
+# 六、统计与风险查询
+###############################################
+
+### 查询审计计划统计
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/statistics
 Accept: application/json
 
-### 分页查询审计计划
-GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?page=1&pageSize=10
+### 查询审计计划风险统计
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/risk-statistics
 Accept: application/json
 
-### 按关键词查询
-GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?keyword=内部质量&page=1&pageSize=10
+### 查询逾期审计计划
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/risk-list?type=Overdue&page=1&pageSize=10
 Accept: application/json
 
-### 按状态查询
-GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?status=Draft&page=1&pageSize=10
+### 查询7天内到期审计计划
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/risk-list?type=DueSoon&page=1&pageSize=10
 Accept: application/json
 
-### 按日期范围查询
-GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-07-01&endDate=2026-07-31&page=1&pageSize=10
+### 【预期400】测试非法风险类型
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/risk-list?type=abc&page=1&pageSize=10
 Accept: application/json
 
-### 测试错误日期范围
-GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-08-31&endDate=2026-08-01&page=1&pageSize=10
+
+###############################################
+# 七、操作日志
+###############################################
+
+### 查询审计计划操作日志
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/logs
+Accept: application/json
+
+### 查询完整详情并包含操作日志
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/detail
+Accept: application/json
+
+
+###############################################
+# 八、软删除、回收站与恢复
+###############################################
+
+### 软删除审计计划
+DELETE {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Accept: application/json
+X-User-Name: {{OperatorName}}
+
+### 【预期404】删除后通过普通详情接口查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Accept: application/json
+
+### 查询回收站
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/recycle-bin
+Accept: application/json
+
+### 查询已删除审计计划的操作日志
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/logs
+Accept: application/json
+
+### 恢复已删除的审计计划
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/restore
+Accept: application/json
+X-User-Name: {{OperatorName}}
+
+### 恢复后重新查询详情
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}
+Accept: application/json
+
+### 【预期400】重复恢复未删除的审计计划
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/{{AuditPlanId}}/restore
+Accept: application/json
+X-User-Name: {{OperatorName}}
+
+
+###############################################
+# 九、数据库连接测试
+###############################################
+
+### 测试数据库连接
+GET {{AuditTracking.Api_HostAddress}}/api/database/test
 Accept: application/json
