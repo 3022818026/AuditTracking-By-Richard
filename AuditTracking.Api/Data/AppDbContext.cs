@@ -11,4 +11,13 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<AuditPlan> AuditPlans { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<AuditPlan>()
+            .HasIndex(x => x.AuditNo)
+            .IsUnique();
+    }
 }

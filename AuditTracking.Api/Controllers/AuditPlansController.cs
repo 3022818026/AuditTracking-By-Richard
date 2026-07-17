@@ -22,6 +22,15 @@ public class AuditPlansController : ControllerBase
     public async Task<IActionResult> GetList(
         [FromQuery] AuditPlanQueryDto queryDto)
     {
+        if (queryDto.StartDate.HasValue &&
+    queryDto.EndDate.HasValue &&
+    queryDto.StartDate.Value > queryDto.EndDate.Value)
+        {
+            return BadRequest(new
+            {
+                message = "开始日期不能晚于结束日期"
+            });
+        }
         var query = _dbContext.AuditPlans
             .AsNoTracking()
             .AsQueryable();
@@ -111,8 +120,10 @@ public class AuditPlansController : ControllerBase
     public async Task<IActionResult> Create(
         CreateAuditPlanDto dto)
     {
+        var auditNo = dto.AuditNo.Trim();
+
         var auditNoExists = await _dbContext.AuditPlans
-            .AnyAsync(x => x.AuditNo == dto.AuditNo);
+            .AnyAsync(x => x.AuditNo == auditNo);
 
         if (auditNoExists)
         {
@@ -124,7 +135,7 @@ public class AuditPlansController : ControllerBase
 
         var plan = new AuditPlan
         {
-            AuditNo = dto.AuditNo.Trim(),
+            AuditNo = auditNo,
             Title = dto.Title.Trim(),
             AuditType = dto.AuditType?.Trim(),
             PlannedDate = dto.PlannedDate,
@@ -143,6 +154,7 @@ public class AuditPlansController : ControllerBase
             new { id = plan.Id },
             plan);
     }
+
     // 修改审计计划
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(
@@ -159,12 +171,31 @@ public class AuditPlansController : ControllerBase
             });
         }
 
+        var allowedStatuses = new[]
+        {
+        "Draft",
+        "InProgress",
+        "Completed",
+        "Closed",
+        "Cancelled"
+    };
+
+        var status = dto.Status.Trim();
+
+        if (!allowedStatuses.Contains(status))
+        {
+            return BadRequest(new
+            {
+                message = "无效的审计状态"
+            });
+        }
+
         plan.Title = dto.Title.Trim();
         plan.AuditType = dto.AuditType?.Trim();
         plan.PlannedDate = dto.PlannedDate;
         plan.Auditee = dto.Auditee?.Trim();
         plan.Auditor = dto.Auditor?.Trim();
-        plan.Status = dto.Status.Trim();
+        plan.Status = status;
         plan.Result = dto.Result?.Trim();
         plan.Remark = dto.Remark?.Trim();
         plan.UpdatedAt = DateTime.Now;

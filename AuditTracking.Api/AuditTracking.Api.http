@@ -56,3 +56,6 @@ Accept: application/json
 GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-07-01&endDate=2026-07-31&page=1&pageSize=10
 Accept: application/json
 
+### 测试错误日期范围
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-08-31&endDate=2026-08-01&page=1&pageSize=10
+Accept: application/json
