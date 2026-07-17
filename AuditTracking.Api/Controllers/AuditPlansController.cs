@@ -17,16 +17,74 @@ public class AuditPlansController : ControllerBase
         _dbContext = dbContext;
     }
 
-    // 查询全部审计计划
+    // 分页查询审计计划
     [HttpGet]
-    public async Task<IActionResult> GetList()
+    public async Task<IActionResult> GetList(
+        [FromQuery] AuditPlanQueryDto queryDto)
     {
-        var plans = await _dbContext.AuditPlans
+        var query = _dbContext.AuditPlans
             .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(queryDto.Keyword))
+        {
+            var keyword = queryDto.Keyword.Trim();
+
+            query = query.Where(x =>
+                x.AuditNo.Contains(keyword) ||
+                x.Title.Contains(keyword) ||
+                (x.Auditee != null && x.Auditee.Contains(keyword)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(queryDto.Status))
+        {
+            query = query.Where(x =>
+                x.Status == queryDto.Status.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(queryDto.AuditType))
+        {
+            query = query.Where(x =>
+                x.AuditType == queryDto.AuditType.Trim());
+        }
+
+        if (queryDto.StartDate.HasValue)
+        {
+            query = query.Where(x =>
+                x.PlannedDate >= queryDto.StartDate.Value);
+        }
+
+        if (queryDto.EndDate.HasValue)
+        {
+            query = query.Where(x =>
+                x.PlannedDate <= queryDto.EndDate.Value);
+        }
+
+        var page = queryDto.Page < 1
+            ? 1
+            : queryDto.Page;
+
+        var pageSize = queryDto.PageSize < 1
+            ? 10
+            : Math.Min(queryDto.PageSize, 100);
+
+        var total = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return Ok(plans);
+        return Ok(new
+        {
+            items,
+            page,
+            pageSize,
+            total,
+            totalPages = (int)Math.Ceiling(
+                total / (double)pageSize)
+        });
     }
 
     // 根据 ID 查询详情
@@ -84,5 +142,57 @@ public class AuditPlansController : ControllerBase
             nameof(GetById),
             new { id = plan.Id },
             plan);
+    }
+    // 修改审计计划
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(
+        int id,
+        UpdateAuditPlanDto dto)
+    {
+        var plan = await _dbContext.AuditPlans.FindAsync(id);
+
+        if (plan == null)
+        {
+            return NotFound(new
+            {
+                message = "未找到该审计计划"
+            });
+        }
+
+        plan.Title = dto.Title.Trim();
+        plan.AuditType = dto.AuditType?.Trim();
+        plan.PlannedDate = dto.PlannedDate;
+        plan.Auditee = dto.Auditee?.Trim();
+        plan.Auditor = dto.Auditor?.Trim();
+        plan.Status = dto.Status.Trim();
+        plan.Result = dto.Result?.Trim();
+        plan.Remark = dto.Remark?.Trim();
+        plan.UpdatedAt = DateTime.Now;
+
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(plan);
+    }
+    // 删除审计计划
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var plan = await _dbContext.AuditPlans.FindAsync(id);
+
+        if (plan == null)
+        {
+            return NotFound(new
+            {
+                message = "未找到该审计计划"
+            });
+        }
+
+        _dbContext.AuditPlans.Remove(plan);
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "审计计划删除成功"
+        });
     }
 }

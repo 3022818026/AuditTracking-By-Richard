@@ -21,3 +21,38 @@ Content-Type: application/json
   "auditor": "夏宋诚",
   "remark": "第一次审计计划接口测试"
 }
+### 修改审计计划
+PUT {{AuditTracking.Api_HostAddress}}/api/audit-plans/1
+Content-Type: application/json
+
+{
+  "title": "2026年度内部质量审计（已修改）",
+  "auditType": "内部审计",
+  "plannedDate": "2026-07-25T09:30:00",
+  "auditee": "生产与质量部门",
+  "auditor": "夏宋诚",
+  "status": "InProgress",
+  "result": "Pending",
+  "remark": "修改接口测试成功"
+}
+
+### 删除审计计划
+DELETE {{AuditTracking.Api_HostAddress}}/api/audit-plans/1
+Accept: application/json
+
+### 分页查询审计计划
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?page=1&pageSize=10
+Accept: application/json
+
+### 按关键词查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?keyword=内部质量&page=1&pageSize=10
+Accept: application/json
+
+### 按状态查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?status=Draft&page=1&pageSize=10
+Accept: application/json
+
+### 按日期范围查询
+GET {{AuditTracking.Api_HostAddress}}/api/audit-plans?startDate=2026-07-01&endDate=2026-07-31&page=1&pageSize=10
+Accept: application/json
+
