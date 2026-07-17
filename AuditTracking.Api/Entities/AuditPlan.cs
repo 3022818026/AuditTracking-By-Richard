@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AuditTracking.Api.Entities;
@@ -58,5 +58,11 @@ public class AuditPlan
 
     [MaxLength(100)]
     public string? DeletedBy { get; set; }
+
+    /// <summary>
+    /// 该审计计划包含的审计问题。
+    /// </summary>
+    public ICollection<AuditIssue> AuditIssues { get; set; }
+        = new List<AuditIssue>();
 
 }

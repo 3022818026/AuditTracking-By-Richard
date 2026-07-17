@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using AuditTracking.Api.Common;
+using System.Net;
 using System.Text.Json;
 
 namespace AuditTracking.Api.Middleware;
@@ -24,7 +25,9 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (Exception exception)
         {
-            await HandleExceptionAsync(context, exception);
+            await HandleExceptionAsync(
+                context,
+                exception);
         }
     }
 
@@ -40,18 +43,22 @@ public sealed class ExceptionHandlingMiddleware
             traceId,
             context.Request.Path);
 
+        if (context.Response.HasStarted)
+        {
+            throw exception;
+        }
+
+        context.Response.Clear();
+
         context.Response.StatusCode =
             (int)HttpStatusCode.InternalServerError;
 
         context.Response.ContentType =
             "application/json; charset=utf-8";
 
-        var response = new
-        {
-            success = false,
-            message = "服务器内部错误，请稍后重试",
-            traceId
-        };
+        var response = ApiResponse.Fail(
+            message: "服务器内部错误，请稍后重试",
+            traceId: traceId);
 
         var json = JsonSerializer.Serialize(
             response,

@@ -4,6 +4,7 @@ using AuditTracking.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuditTracking.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717073833_AddCorrectiveActions")]
+    partial class AddCorrectiveActions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -382,56 +385,6 @@ namespace AuditTracking.Api.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("CorrectiveActions", (string)null);
-                });
-
-            modelBuilder.Entity("AuditTracking.Api.Entities.CorrectiveActionOperationLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActionNo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("AfterData")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BeforeData")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("CorrectiveActionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("OperationType")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("Operator")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Remark")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CorrectiveActionId");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("OperationType");
-
-                    b.ToTable("CorrectiveActionOperationLogs", (string)null);
                 });
 
             modelBuilder.Entity("AuditTracking.Api.Entities.AuditIssue", b =>
