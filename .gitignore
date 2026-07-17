@@ -238,6 +238,17 @@ ClientBin/
 *.jfm
 *.pfx
 *.publishsettings
+
+# Frontend build and local tool directories
+node_modules/
+dist/
+.vscode/
+*.local
+
+# Local development and Visual Studio artifacts
+.vs/
+bin/
+obj/
 orleans.codegen.cs
 
 # Including strong name files can present a security risk

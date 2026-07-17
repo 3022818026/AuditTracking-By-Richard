@@ -125,9 +125,20 @@ onMounted(() => {
       <div>
         <p class="eyebrow">AuditTrack • 审计中心</p>
         <h2>审计计划管理</h2>
-        <p class="sub-title">管理审计计划、执行时间和审核状态</p>
+        <p class="sub-title">查看、筛选和跟踪审计计划执行进度</p>
       </div>
-      <div class="header-badge">实时同步</div>
+      <div class="header-badge">实时更新</div>
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-card">
+        <span class="summary-label">计划总量</span>
+        <strong>{{ total }}</strong>
+      </div>
+      <div class="summary-card accent">
+        <span class="summary-label">当前筛选</span>
+        <strong>{{ query.status || '全部状态' }}</strong>
+      </div>
     </div>
 
     <el-card shadow="never" class="filter-card">
@@ -163,6 +174,11 @@ onMounted(() => {
     </el-card>
 
     <el-card shadow="never" class="table-card">
+      <div class="table-toolbar">
+        <span class="table-title">审计计划列表</span>
+        <span class="table-tip">支持关键词、状态和类型联动筛选</span>
+      </div>
+
       <el-table v-loading="loading" :data="plans" :empty-text="tableEmptyText" border stripe>
         <el-table-column prop="auditNo" label="审计编号" width="150" fixed="left" />
         <el-table-column prop="title" label="审计标题" min-width="220" show-overflow-tooltip />
@@ -223,24 +239,24 @@ onMounted(() => {
 .page-shell {
   min-height: 100vh;
   padding: 24px;
-  background: linear-gradient(135deg, #fff7fb 0%, #f5ecff 100%);
+  background: linear-gradient(135deg, #faf7ff 0%, #f5f2ff 100%);
 }
 
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding: 24px 28px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 20px 45px rgba(173, 104, 255, 0.12);
-  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f2ff 100%);
+  border: 1px solid #efe4ff;
+  box-shadow: 0 10px 30px rgba(116, 78, 199, 0.08);
 }
 
 .eyebrow {
   margin: 0 0 6px;
-  color: #b25cd2;
+  color: #8a5cf6;
   font-size: 12px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -249,39 +265,88 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0;
-  color: #4b2e6b;
+  color: #34224f;
   font-size: 24px;
 }
 
 .sub-title {
   margin: 6px 0 0;
-  color: #8b7aa8;
+  color: #7c7390;
   font-size: 14px;
 }
 
 .header-badge {
   padding: 8px 14px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ff5fb2 0%, #8a5cf6 100%);
+  background: linear-gradient(90deg, #7b61ff 0%, #c06dff 100%);
   color: white;
   font-size: 13px;
   font-weight: 600;
 }
 
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-card {
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #efe4ff;
+  box-shadow: 0 8px 24px rgba(116, 78, 199, 0.06);
+}
+
+.summary-card.accent {
+  background: linear-gradient(135deg, #f8f2ff 0%, #ffffff 100%);
+}
+
+.summary-label {
+  display: block;
+  color: #8b82a1;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.summary-card strong {
+  font-size: 20px;
+  color: #34224f;
+}
+
 .filter-card,
 .table-card {
   border: none;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 40px rgba(173, 104, 255, 0.1);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(116, 78, 199, 0.06);
 }
 
 .search-form {
   margin-bottom: -16px;
 }
 
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.table-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #34224f;
+}
+
+.table-tip {
+  font-size: 12px;
+  color: #8b82a1;
+}
+
 .table-card {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .pagination-wrapper {
@@ -299,6 +364,10 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .summary-row {
+    grid-template-columns: 1fr;
   }
 
   .pagination-wrapper {
