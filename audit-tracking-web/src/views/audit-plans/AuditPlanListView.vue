@@ -612,52 +612,61 @@ onMounted(() => {
         <span class="table-tip">支持关键词、状态和类型联动筛选</span>
       </div>
 
-      <el-table v-loading="loading" :data="plans" :empty-text="tableEmptyText" border stripe>
-        <el-table-column prop="auditNo" label="审计编号" width="150" fixed="left" />
-        <el-table-column prop="title" label="审计标题" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="auditType" label="审计类型" width="130">
+      <div class="table-responsive">
+        <el-table v-loading="loading" :data="plans" :empty-text="tableEmptyText" border stripe style="min-width:1530px">
+          <el-table-column prop="auditNo" label="审计编号" width="130" fixed="left" />
+          <el-table-column prop="title" label="审计标题" min-width="220" show-overflow-tooltip />
+          <el-table-column prop="auditType" label="审计类型" width="130">
           <template #default="{ row }">
             {{ row.auditType || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="auditee" label="被审计对象" width="160" show-overflow-tooltip>
+          <el-table-column prop="auditee" label="被审计对象" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.auditee || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="auditor" label="审计人员" width="130">
+          <el-table-column prop="auditor" label="审计人员" width="140">
           <template #default="{ row }">
             {{ row.auditor || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="110">
+          <el-table-column prop="status" label="状态" width="110">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ formatStatus(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="计划日期" width="180">
+          <el-table-column label="计划日期" width="140">
           <template #default="{ row }">
             {{ formatDate(row.plannedDate) }}
           </template>
         </el-table-column>
-        <el-table-column prop="result" label="审计结果" width="130">
+          <el-table-column prop="result" label="审计结果" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.result || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="备注" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }">
-            {{ row.remark || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="210" fixed="right">
-          <template #default="{ row }">
-            <el-button type="text" @click="openEditDialog(row)">编辑</el-button>
-            <el-button type="text" @click="handleDelete(row)">删除</el-button>
-            <el-button type="text" @click="openLogsDialog(row)">日志</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          <el-table-column prop="createdAt" label="创建时间" width="170">
+            <template #default="{ row }">
+              {{ formatDate(row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="180" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.remark || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="230" fixed="right" header-align="center">
+            <template #default="{ row }">
+              <div class="action-buttons">
+                <el-button type="text" @click="openEditDialog(row)">编辑</el-button>
+                <el-button type="text" @click="handleDelete(row)">删除</el-button>
+                <el-button type="text" @click="openLogsDialog(row)">日志</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <div class="pagination-wrapper">
         <el-pagination
@@ -903,6 +912,21 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table-responsive .el-table {
+  /* ensure table respects min-width set on table element */
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .log-data {

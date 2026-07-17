@@ -1,0 +1,12 @@
+<template>
+  <div>
+    <h3>整改验证（占位）</h3>
+    <p>正在建设中。</p>
+  </div>
+</template>
+
+<script setup lang="ts">
+</script>
+
+<style scoped>
+</style>

@@ -11,8 +11,12 @@ public class AppDbContext : DbContext
     {
     }
 
+
     public DbSet<CorrectiveAction> CorrectiveActions =>
     Set<CorrectiveAction>();
+
+    public DbSet<RectificationVerification> RectificationVerifications =>
+    Set<RectificationVerification>();
 
     public DbSet<AuditPlan> AuditPlans =>
         Set<AuditPlan>();
@@ -33,6 +37,62 @@ public class AppDbContext : DbContext
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<RectificationVerification>(entity =>
+        {
+            entity.ToTable("RectificationVerifications");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.VerificationNo)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(x => x.VerificationResult)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.VerificationComment)
+                .HasMaxLength(4000)
+                .IsRequired();
+
+            entity.Property(x => x.Verifier)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.CreatedBy)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.UpdatedBy)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.DeletedBy)
+                .HasMaxLength(100);
+
+            entity.HasIndex(x => x.VerificationNo)
+                .IsUnique();
+
+            entity.HasIndex(x => x.AuditIssueId);
+
+            entity.HasIndex(x => x.CorrectiveActionId);
+
+            entity.HasIndex(x => x.VerificationResult);
+
+            entity.HasIndex(x => x.VerifiedAt);
+
+            entity.HasQueryFilter(x => !x.IsDeleted);
+
+            entity.HasOne(x => x.AuditIssue)
+                .WithMany(x => x.RectificationVerifications)
+                .HasForeignKey(x => x.AuditIssueId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.CorrectiveAction)
+                .WithMany(x => x.RectificationVerifications)
+                .HasForeignKey(x => x.CorrectiveActionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         modelBuilder.Entity<AuditPlan>(entity =>
         {
