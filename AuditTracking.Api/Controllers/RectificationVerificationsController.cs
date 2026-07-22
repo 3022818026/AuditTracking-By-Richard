@@ -4,12 +4,14 @@ using AuditTracking.Api.Data;
 using AuditTracking.Api.Dtos.RectificationVerifications;
 using AuditTracking.Api.Entities;
 using AuditTracking.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuditTracking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/rectification-verifications")]
 public sealed class RectificationVerificationsController : ControllerBase
 {

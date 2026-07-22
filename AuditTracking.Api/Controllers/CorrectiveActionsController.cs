@@ -4,6 +4,7 @@ using AuditTracking.Api.Dtos.CorrectiveActions;
 using AuditTracking.Api.Entities;
 using AuditTracking.Api.Services;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace AuditTracking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/corrective-actions")]
 public sealed class CorrectiveActionsController : ControllerBase
 {

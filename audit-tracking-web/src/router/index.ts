@@ -33,9 +33,9 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore(pinia)
-  authStore.initializeAuth()
+  await authStore.initializeAuth()
 
   if (to.name === 'login' && authStore.isAuthenticated) {
     return { name: 'dashboard' }

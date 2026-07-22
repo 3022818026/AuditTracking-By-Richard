@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { AxiosInstance } from 'axios'
+import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types/api'
 import {
   AUTH_UNAUTHORIZED_EVENT,
@@ -8,6 +9,25 @@ import {
   getStoredCurrentUser,
   isTokenExpired,
 } from '@/utils/auth'
+
+let unauthorizedEventPending = false
+let lastForbiddenNotificationAt = 0
+
+function notifyUnauthorized() {
+  if (
+    typeof window === 'undefined' ||
+    window.location.pathname === '/login' ||
+    unauthorizedEventPending
+  ) {
+    return
+  }
+
+  unauthorizedEventPending = true
+  window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT))
+  window.setTimeout(() => {
+    unauthorizedEventPending = false
+  }, 500)
+}
 
 const request: AxiosInstance = axios.create({
   baseURL: '/api',
@@ -30,6 +50,7 @@ request.interceptors.request.use((config) => {
     }
   } else if (accessToken) {
     clearAuthStorage()
+    notifyUnauthorized()
   }
 
   return config
@@ -55,15 +76,20 @@ request.interceptors.request.use((config) => {
     return respData
   },
   (error: any) => {
+    const resp = error?.response?.data as ApiResponse<unknown> | undefined
+
     if (error?.response?.status === 401) {
       clearAuthStorage()
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT))
+      notifyUnauthorized()
+    } else if (error?.response?.status === 403) {
+      const now = Date.now()
+      if (now - lastForbiddenNotificationAt > 1000) {
+        lastForbiddenNotificationAt = now
+        ElMessage.error(resp?.message || '没有权限执行此操作')
       }
     }
 
     // Try to extract backend message
-    const resp = error?.response?.data as ApiResponse<unknown> | undefined
     if (resp && typeof resp.message === 'string') {
       return Promise.reject(new Error(resp.message))
     }

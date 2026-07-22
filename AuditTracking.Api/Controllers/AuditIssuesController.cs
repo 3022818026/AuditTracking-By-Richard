@@ -3,6 +3,7 @@ using AuditTracking.Api.Data;
 using AuditTracking.Api.Dtos.AuditIssues;
 using AuditTracking.Api.Entities;
 using AuditTracking.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -10,6 +11,7 @@ using System.Text.Json;
 namespace AuditTracking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/audit-issues")]
 public sealed class AuditIssuesController : ControllerBase
 {

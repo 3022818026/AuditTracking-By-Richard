@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import { useAuthStore } from '@/stores/auth'
+import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const changePasswordVisible = ref(false)
 
 const roleLabel = computed(() => {
   if (authStore.currentUser?.role === 'Admin') return '管理员'
@@ -29,6 +31,15 @@ async function handleLogout() {
     if (error !== 'cancel' && error !== 'close') throw error
   }
 }
+
+function handleUserCommand(command: string) {
+  if (command === 'change-password') {
+    changePasswordVisible.value = true
+    return
+  }
+
+  if (command === 'logout') handleLogout()
+}
 </script>
 
 <template>
@@ -42,11 +53,21 @@ async function handleLogout() {
       <div class="header-main">
         <div class="system-name">审计跟踪管理系统</div>
         <div class="user-area">
-          <div class="user-copy">
-            <strong>{{ authStore.currentUser?.displayName || '-' }}</strong>
-            <span>{{ authStore.currentUser?.userName || '-' }} · {{ roleLabel }}</span>
-          </div>
-          <el-button plain class="logout-button" @click="handleLogout">退出登录</el-button>
+          <el-dropdown trigger="click" @command="handleUserCommand">
+            <button type="button" class="user-trigger">
+              <span class="user-copy">
+                <strong>{{ authStore.currentUser?.displayName || '-' }}</strong>
+                <span>{{ authStore.currentUser?.userName || '-' }} · {{ roleLabel }}</span>
+              </span>
+              <span class="menu-caret">⌄</span>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="change-password">修改密码</el-dropdown-item>
+                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
     </el-header>
@@ -66,6 +87,8 @@ async function handleLogout() {
         <router-view />
       </el-main>
     </el-container>
+
+    <ChangePasswordDialog v-model="changePasswordVisible" />
   </el-container>
 </template>
 
@@ -102,10 +125,22 @@ async function handleLogout() {
 }
 .system-name { font-size: 18px; font-weight: 600; }
 .user-area { display: flex; align-items: center; gap: 14px; }
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+}
+.user-trigger:hover { background: rgba(255, 255, 255, 0.12); }
 .user-copy { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.35; }
 .user-copy strong { font-size: 14px; }
 .user-copy span { font-size: 12px; opacity: 0.78; }
-.logout-button { color: #2468ae; }
+.menu-caret { font-size: 16px; opacity: 0.85; }
 .content-shell { min-height: 0; }
 .side-panel { background: #fff; border-right: 1px solid #ebeef5; }
 .side-menu { height: 100%; padding-top: 12px; border-right: 0; }

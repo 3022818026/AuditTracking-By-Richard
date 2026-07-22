@@ -7,8 +7,6 @@ import type {
   LoginResponse,
 } from '@/types/auth'
 
-// The backend AuthController is not available yet. These centralized calls are
-// ready for the expected endpoints and intentionally do not provide mock login.
 export function login(data: LoginRequest): Promise<LoginResponse> {
   return request.post('/auth/login', data)
 }

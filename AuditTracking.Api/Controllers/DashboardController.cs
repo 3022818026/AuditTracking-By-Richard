@@ -1,12 +1,14 @@
 using AuditTracking.Api.Common;
 using AuditTracking.Api.Data;
 using AuditTracking.Api.Dtos.Dashboard;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuditTracking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/dashboard")]
 public sealed class DashboardController : ControllerBase
 {

@@ -38,6 +38,17 @@ function getRedirectTarget() {
     : '/'
 }
 
+function getLoginErrorMessage(error: unknown) {
+  if (!(error instanceof Error) || !error.message) return '登录失败，请稍后重试'
+  if (error.message === 'Network Error' || error.message.includes('ERR_NETWORK')) {
+    return '无法连接认证服务，请确认后端服务已启动'
+  }
+  if (error.message.toLowerCase().includes('timeout')) {
+    return '认证服务响应超时，请稍后重试'
+  }
+  return error.message
+}
+
 async function submitLogin() {
   if (!formRef.value || authStore.loginLoading) return
 
@@ -61,9 +72,7 @@ async function submitLogin() {
 
     await router.replace(getRedirectTarget())
   } catch (error) {
-    ElMessage.error(
-      error instanceof Error && error.message ? error.message : '登录失败，请稍后重试',
-    )
+    ElMessage.error(getLoginErrorMessage(error))
   }
 }
 

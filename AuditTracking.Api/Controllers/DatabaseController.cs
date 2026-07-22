@@ -1,9 +1,11 @@
-﻿using AuditTracking.Api.Data;
+using AuditTracking.Api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuditTracking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class DatabaseController : ControllerBase
 {
