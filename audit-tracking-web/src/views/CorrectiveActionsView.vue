@@ -69,8 +69,37 @@ const form = reactive<any>({
 const detail = ref<CorrectiveActionDetail | null>(null)
 const recycleList = ref<CorrectiveAction[]>([])
 const operationLogs = ref<CorrectiveActionOperationLog[]>([])
-const statusPayload = reactive<ChangeCorrectiveActionStatusRequest>({ status: 'Draft', completionDescription: undefined, remark: '' })
+const statusPayload = reactive<ChangeCorrectiveActionStatusRequest>({
+  status: '' as ChangeCorrectiveActionStatusRequest['status'],
+  completionDescription: undefined,
+  remark: '',
+})
 const currentRow = ref<CorrectiveAction | null>(null)
+const allowedActionStatuses = ref<ChangeCorrectiveActionStatusRequest['status'][]>([])
+
+const correctiveActionTransitions: Record<string, ChangeCorrectiveActionStatusRequest['status'][]> = {
+  Draft: ['Submitted'],
+  Submitted: ['Approved', 'Rejected'],
+  Rejected: ['Draft'],
+  Approved: ['Completed'],
+  Completed: [],
+}
+
+const correctiveActionStatusLabels: Record<string, string> = {
+  Draft: '草稿',
+  Submitted: '已提交',
+  Approved: '已批准',
+  Rejected: '已驳回',
+  Completed: '已完成',
+}
+
+function getAllowedActionStatuses(status: string) {
+  return correctiveActionTransitions[status] ?? []
+}
+
+function getActionStatusLabel(status: string) {
+  return correctiveActionStatusLabels[status] ?? status
+}
 
 function formatDate(value?: string | null) {
   if (!value) return '-'
@@ -287,7 +316,8 @@ async function openLogs(row: CorrectiveAction) {
 
 function openChangeStatus(row: CorrectiveAction) {
   currentRow.value = row
-  statusPayload.status = row.status as any
+  allowedActionStatuses.value = getAllowedActionStatuses(row.status)
+  statusPayload.status = '' as ChangeCorrectiveActionStatusRequest['status']
   statusPayload.completionDescription = undefined
   statusPayload.remark = ''
   statusDialogVisible.value = true
@@ -385,7 +415,11 @@ onMounted(() => {
               <div style="display:flex;gap:8px;white-space:nowrap;">
                 <el-button type="text" @click="openDetail(row)">详情</el-button>
                 <el-button type="text" @click="openEdit(row)">编辑</el-button>
-                <el-button type="text" @click="openChangeStatus(row)">状态</el-button>
+                <el-button
+                  v-if="getAllowedActionStatuses(row.status).length > 0"
+                  type="text"
+                  @click="openChangeStatus(row)"
+                >状态</el-button>
                 <el-button type="text" @click="handleDelete(row)">删除</el-button>
                 <el-button type="text" @click="openLogs(row)">日志</el-button>
               </div>
@@ -487,15 +521,16 @@ onMounted(() => {
     <!-- 状态变更 -->
     <el-dialog title="变更状态" v-model="statusDialogVisible">
       <div>
-        <p>当前状态：{{ currentRow?.status }}</p>
+        <p>当前状态：{{ getActionStatusLabel(currentRow?.status ?? '') }}</p>
         <el-form>
           <el-form-item label="目标状态">
-            <el-select v-model="statusPayload.status" style="width:100%">
-              <el-option label="Draft" value="Draft" />
-              <el-option label="Submitted" value="Submitted" />
-              <el-option label="Approved" value="Approved" />
-              <el-option label="Rejected" value="Rejected" />
-              <el-option label="Completed" value="Completed" />
+            <el-select v-model="statusPayload.status" placeholder="请选择目标状态" style="width:100%">
+              <el-option
+                v-for="status in allowedActionStatuses"
+                :key="status"
+                :label="getActionStatusLabel(status)"
+                :value="status"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="完成说明" v-if="statusPayload.status === 'Completed'">

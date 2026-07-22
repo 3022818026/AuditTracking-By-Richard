@@ -52,6 +52,6 @@ export function getAuditIssueLogs(id: number): Promise<AuditIssueOperationLog[]>
 import { getAuditPlans } from '@/api/audit-plans'
 
 export async function getAuditPlanOptions(): Promise<AuditPlanOption[]> {
-  const res = await getAuditPlans({ page: 1, pageSize: 1000 })
+  const res = await getAuditPlans({ page: 1, pageSize: 100 })
   return res.items.map((p: any) => ({ id: p.id, auditNo: p.auditNo, title: p.title }))
 }

@@ -74,8 +74,36 @@ const form = reactive<any>({
 const detail = ref<AuditIssueDetail | null>(null)
 const recycleList = ref<AuditIssue[]>([])
 const operationLogs = ref<AuditIssueOperationLog[]>([])
-const statusPayload = reactive<ChangeAuditIssueStatusRequest>({ status: 'Open', remark: '' })
+const statusPayload = reactive<ChangeAuditIssueStatusRequest>({
+  status: '' as ChangeAuditIssueStatusRequest['status'],
+  remark: '',
+})
 const currentRow = ref<AuditIssue | null>(null)
+const allowedIssueStatuses = ref<ChangeAuditIssueStatusRequest['status'][]>([])
+
+const auditIssueTransitions: Record<string, ChangeAuditIssueStatusRequest['status'][]> = {
+  Open: ['Rectifying', 'Rejected'],
+  Rectifying: ['PendingVerification', 'Rejected'],
+  PendingVerification: ['Closed', 'Rectifying'],
+  Closed: [],
+  Rejected: [],
+}
+
+const auditIssueStatusLabels: Record<string, string> = {
+  Open: '待整改',
+  Rectifying: '整改中',
+  PendingVerification: '待验证',
+  Closed: '已关闭',
+  Rejected: '已驳回',
+}
+
+function getAllowedIssueStatuses(status: string) {
+  return auditIssueTransitions[status] ?? []
+}
+
+function getIssueStatusLabel(status: string) {
+  return auditIssueStatusLabels[status] ?? status
+}
 
 function formatDate(value?: string | null) {
   if (!value) return '-'
@@ -101,6 +129,8 @@ async function loadPlans() {
     plans.value = await getAuditPlanOptions()
   } catch (e) {
     console.error(e)
+    plans.value = []
+    ElMessage.error(e instanceof Error && e.message ? e.message : '审计计划选项加载失败')
   }
 }
 
@@ -310,7 +340,8 @@ async function openLogs(row: AuditIssue) {
 
 function openChangeStatus(row: AuditIssue) {
   currentRow.value = row
-  statusPayload.status = row.status as any
+  allowedIssueStatuses.value = getAllowedIssueStatuses(row.status)
+  statusPayload.status = '' as ChangeAuditIssueStatusRequest['status']
   statusPayload.remark = ''
   statusDialogVisible.value = true
 }
@@ -426,7 +457,11 @@ function tryFormat(val: any) {
               <div style="display:flex;gap:8px;white-space:nowrap;">
                 <el-button type="text" @click="openDetail(row)">详情</el-button>
                 <el-button type="text" @click="openEdit(row)">编辑</el-button>
-                <el-button type="text" @click="openChangeStatus(row)">状态</el-button>
+                <el-button
+                  v-if="getAllowedIssueStatuses(row.status).length > 0"
+                  type="text"
+                  @click="openChangeStatus(row)"
+                >状态</el-button>
                 <el-button type="text" @click="handleDelete(row)">删除</el-button>
                 <el-button type="text" @click="openLogs(row)">日志</el-button>
               </div>
@@ -539,15 +574,16 @@ function tryFormat(val: any) {
     <!-- 状态变更 -->
     <el-dialog title="变更状态" v-model="statusDialogVisible">
       <div>
-        <p>当前状态：{{ currentRow?.status }}</p>
+        <p>当前状态：{{ getIssueStatusLabel(currentRow?.status ?? '') }}</p>
         <el-form>
           <el-form-item label="目标状态">
-            <el-select v-model="statusPayload.status" style="width:100%">
-              <el-option label="Open" value="Open" />
-              <el-option label="Rectifying" value="Rectifying" />
-              <el-option label="PendingVerification" value="PendingVerification" />
-              <el-option label="Closed" value="Closed" />
-              <el-option label="Rejected" value="Rejected" />
+            <el-select v-model="statusPayload.status" placeholder="请选择目标状态" style="width:100%">
+              <el-option
+                v-for="status in allowedIssueStatuses"
+                :key="status"
+                :label="getIssueStatusLabel(status)"
+                :value="status"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="备注">

@@ -51,6 +51,6 @@ export function getCorrectiveActionLogs(id: number): Promise<CorrectiveActionOpe
 import { getAuditIssues } from '@/api/auditIssues'
 
 export async function getAuditIssueOptions(): Promise<AuditIssueOption[]> {
-  const res = await getAuditIssues({ page: 1, pageSize: 1000 })
+  const res = await getAuditIssues({ page: 1, pageSize: 100 })
   return res.items.map((i: any) => ({ id: i.id, issueNo: i.issueNo, title: i.title }))
 }

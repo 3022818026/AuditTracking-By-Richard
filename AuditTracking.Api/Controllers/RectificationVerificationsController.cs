@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AuditTracking.Api.Common;
 using AuditTracking.Api.Data;
 using AuditTracking.Api.Dtos.RectificationVerifications;
@@ -24,6 +25,27 @@ public sealed class RectificationVerificationsController : ControllerBase
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
+    }
+
+    private static RectificationVerificationOperationLog CreateOperationLog(
+        RectificationVerification verification,
+        string operationType,
+        object? beforeData,
+        object? afterData,
+        string operatorName,
+        string? remark)
+    {
+        return new RectificationVerificationOperationLog
+        {
+            RectificationVerificationId = verification.Id,
+            VerificationNo = verification.VerificationNo,
+            OperationType = operationType,
+            BeforeData = beforeData is null ? null : JsonSerializer.Serialize(beforeData),
+            AfterData = afterData is null ? null : JsonSerializer.Serialize(afterData),
+            Operator = operatorName,
+            Remark = remark,
+            CreatedAt = DateTime.Now
+        };
     }
 
     [HttpGet]
@@ -248,6 +270,32 @@ public sealed class RectificationVerificationsController : ControllerBase
             }
 
             await _dbContext.SaveChangesAsync();
+
+            var afterSnapshot = new
+            {
+                verification.Id,
+                verification.AuditIssueId,
+                verification.CorrectiveActionId,
+                verification.VerificationNo,
+                verification.VerificationResult,
+                verification.VerificationComment,
+                verification.Verifier,
+                verification.VerifiedAt,
+                verification.IsPassed,
+                verification.CreatedAt,
+                verification.CreatedBy
+            };
+
+            var operationLog = CreateOperationLog(
+                verification,
+                "Create",
+                null,
+                afterSnapshot,
+                operatorName,
+                "创建整改验证记录");
+
+            _dbContext.RectificationVerificationOperationLogs.Add(operationLog);
+            await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
         }
         catch
@@ -282,6 +330,21 @@ public sealed class RectificationVerificationsController : ControllerBase
 
         var operatorName = _currentUserService.UserName;
         var now = DateTime.Now;
+
+        var beforeSnapshot = new
+        {
+            verification.Id,
+            verification.AuditIssueId,
+            verification.CorrectiveActionId,
+            verification.VerificationNo,
+            verification.VerificationResult,
+            verification.VerificationComment,
+            verification.Verifier,
+            verification.VerifiedAt,
+            verification.IsPassed,
+            verification.UpdatedAt,
+            verification.UpdatedBy
+        };
 
         // Determine new values
         var newResult = dto.VerificationResult.Trim();
@@ -320,6 +383,31 @@ public sealed class RectificationVerificationsController : ControllerBase
                 }
             }
 
+            var afterSnapshot = new
+            {
+                verification.Id,
+                verification.AuditIssueId,
+                verification.CorrectiveActionId,
+                verification.VerificationNo,
+                verification.VerificationResult,
+                verification.VerificationComment,
+                verification.Verifier,
+                verification.VerifiedAt,
+                verification.IsPassed,
+                verification.UpdatedAt,
+                verification.UpdatedBy
+            };
+
+            var operationLog = CreateOperationLog(
+                verification,
+                "Update",
+                beforeSnapshot,
+                afterSnapshot,
+                operatorName,
+                "修改整改验证记录");
+
+            _dbContext.RectificationVerificationOperationLogs.Add(operationLog);
+
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
         }
@@ -350,11 +438,51 @@ public sealed class RectificationVerificationsController : ControllerBase
         var operatorName = _currentUserService.UserName;
         var now = DateTime.Now;
 
+        var beforeSnapshot = new
+        {
+            verification.Id,
+            verification.VerificationNo,
+            verification.VerificationResult,
+            verification.Verifier,
+            verification.VerifiedAt,
+            verification.IsPassed,
+            verification.IsDeleted,
+            verification.DeletedAt,
+            verification.DeletedBy,
+            verification.UpdatedAt,
+            verification.UpdatedBy
+        };
+
         verification.IsDeleted = true;
         verification.DeletedAt = now;
         verification.DeletedBy = operatorName;
         verification.UpdatedAt = now;
         verification.UpdatedBy = operatorName;
+
+        var afterSnapshot = new
+        {
+            verification.Id,
+            verification.VerificationNo,
+            verification.VerificationResult,
+            verification.Verifier,
+            verification.VerifiedAt,
+            verification.IsPassed,
+            verification.IsDeleted,
+            verification.DeletedAt,
+            verification.DeletedBy,
+            verification.UpdatedAt,
+            verification.UpdatedBy
+        };
+
+        var operationLog = CreateOperationLog(
+            verification,
+            "Delete",
+            beforeSnapshot,
+            afterSnapshot,
+            operatorName,
+            "删除整改验证记录");
+
+        _dbContext.RectificationVerificationOperationLogs.Add(operationLog);
 
         await _dbContext.SaveChangesAsync();
 
@@ -380,6 +508,38 @@ public sealed class RectificationVerificationsController : ControllerBase
         return Ok(ApiResponse.Ok(items, "整改验证记录回收站查询成功"));
     }
 
+    [HttpGet("{id:int}/logs")]
+    public async Task<IActionResult> GetLogs(int id)
+    {
+        var exists = await _dbContext.RectificationVerifications
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == id);
+
+        if (!exists)
+            return NotFound(ApiResponse.Fail("未找到该整改验证记录"));
+
+        var logs = await _dbContext.RectificationVerificationOperationLogs
+            .AsNoTracking()
+            .Where(x => x.RectificationVerificationId == id)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.RectificationVerificationId,
+                x.VerificationNo,
+                x.OperationType,
+                x.BeforeData,
+                x.AfterData,
+                x.Operator,
+                x.Remark,
+                x.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(ApiResponse.Ok(logs, "整改验证操作日志查询成功"));
+    }
+
     [HttpPut("{id:int}/restore")]
     public async Task<IActionResult> Restore(int id)
     {
@@ -396,11 +556,43 @@ public sealed class RectificationVerificationsController : ControllerBase
         var operatorName = _currentUserService.UserName;
         var now = DateTime.Now;
 
+        var beforeSnapshot = new
+        {
+            verification.Id,
+            verification.VerificationNo,
+            verification.IsDeleted,
+            verification.DeletedAt,
+            verification.DeletedBy,
+            verification.UpdatedAt,
+            verification.UpdatedBy
+        };
+
         verification.IsDeleted = false;
         verification.DeletedAt = null;
         verification.DeletedBy = null;
         verification.UpdatedAt = now;
         verification.UpdatedBy = operatorName;
+
+        var afterSnapshot = new
+        {
+            verification.Id,
+            verification.VerificationNo,
+            verification.IsDeleted,
+            verification.DeletedAt,
+            verification.DeletedBy,
+            verification.UpdatedAt,
+            verification.UpdatedBy
+        };
+
+        var operationLog = CreateOperationLog(
+            verification,
+            "Restore",
+            beforeSnapshot,
+            afterSnapshot,
+            operatorName,
+            "恢复整改验证记录");
+
+        _dbContext.RectificationVerificationOperationLogs.Add(operationLog);
 
         await _dbContext.SaveChangesAsync();
 
