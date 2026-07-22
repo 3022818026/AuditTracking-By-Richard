@@ -527,7 +527,6 @@ onMounted(() => {
       <div>
         <p class="eyebrow">AuditTrack • 审计中心</p>
         <h2>审计计划管理</h2>
-        <p class="sub-title">查看、筛选和跟踪审计计划执行进度</p>
       </div>
       <div class="header-actions">
         <el-button type="primary" @click="openCreateDialog">新增审计计划</el-button>
@@ -826,13 +825,9 @@ onMounted(() => {
 .page-header h2 {
   margin: 0;
   color: #34224f;
-  font-size: 24px;
-}
-
-.sub-title {
-  margin: 6px 0 0;
-  color: #7c7390;
-  font-size: 14px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .header-actions {

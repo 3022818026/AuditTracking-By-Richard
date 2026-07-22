@@ -1,4 +1,6 @@
-﻿namespace AuditTracking.Api.Services;
+using System.Security.Claims;
+
+namespace AuditTracking.Api.Services;
 
 public class CurrentUserService : ICurrentUserService
 {
@@ -14,15 +16,26 @@ public class CurrentUserService : ICurrentUserService
     {
         get
         {
-            var userName = _httpContextAccessor
-                .HttpContext?
-                .Request
-                .Headers["X-User-Name"]
+            var httpContext = _httpContextAccessor.HttpContext;
+            var claimsUserName = httpContext?.User
+                .FindFirst(ClaimTypes.Name)?.Value;
+
+            if (string.IsNullOrWhiteSpace(claimsUserName))
+            {
+                claimsUserName = httpContext?.User
+                    .FindFirst("username")?.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(claimsUserName))
+                return claimsUserName.Trim();
+
+            var headerUserName = httpContext?
+                .Request.Headers["X-User-Name"]
                 .FirstOrDefault();
 
-            return string.IsNullOrWhiteSpace(userName)
+            return string.IsNullOrWhiteSpace(headerUserName)
                 ? "System"
-                : userName.Trim();
+                : headerUserName.Trim();
         }
     }
 }

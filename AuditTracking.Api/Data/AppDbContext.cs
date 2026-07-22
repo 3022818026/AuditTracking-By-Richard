@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     {
     }
 
+    public DbSet<AppUser> AppUsers =>
+        Set<AppUser>();
 
     public DbSet<CorrectiveAction> CorrectiveActions =>
     Set<CorrectiveAction>();
@@ -41,6 +43,43 @@ public class AppDbContext : DbContext
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<AppUser>(entity =>
+        {
+            entity.ToTable("AppUsers");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.UserName)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(x => x.DisplayName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.PasswordHash)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(x => x.Role)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.CreatedBy)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.UpdatedBy)
+                .HasMaxLength(100);
+
+            entity.HasIndex(x => x.UserName)
+                .IsUnique();
+
+            entity.HasIndex(x => x.Role);
+
+            entity.HasIndex(x => x.IsActive);
+        });
 
         modelBuilder.Entity<RectificationVerification>(entity =>
         {
